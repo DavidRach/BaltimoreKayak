@@ -1,0 +1,938 @@
+---
+title: "Baltimore Harbor Kayak Dashboard"
+author:
+  - name: David Rach
+    orcid: 0000-0003-2235-5585
+    corresponding: false
+    email:  drach@som.umaryland.edu
+    roles: 
+      - Organization
+    affiliations: Molecular Microbiology and Immunology Graduate Program, University of Maryland School of Medicine, Baltimore, MD, United States.
+
+date: today
+format:
+  html:
+    layout: full
+link-citations: true
+link-bibliography: true
+toc: true
+toc-location: right
+embed-resources: TRUE
+---
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+library(patchwork)
+library(stringr)
+library(rvest)
+library(plotly)
+```
+
+
+### Sunrise and Sunset
+
+```{r}
+#| include: FALSE
+SunriseSunsetTable <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=0&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
+
+CivilTwilight <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=2&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
+
+MoonPhase <- "https://aa.usno.navy.mil/calculated/moon/phases?date=2024-05-02&nump=50&format=p&submit=Get+Data"
+
+BaltimoreThreeDay <- "https://forecast.weather.gov/data/obhistory/KDMH.html"
+
+Tides <- "https://marineweather.net/tide/fort-mchenry-marsh-patapsco-river-md-tides"
+```
+
+```{r}
+#| include: false
+html <- SunriseSunsetTable
+html <- read_html(html)
+nodes <- html %>% html_nodes('main.usa-layout-docs#main-content')
+pre_element <- nodes %>% html_node('div > pre')
+text <- pre_element %>% html_text()
+
+lines <- strsplit(text, "\n")[[1]]
+lines <- lines[-1:-7]
+lines <- lines[-35:-36]
+lines <- lines[-3] #No need for hour minutes
+
+newlines <- lines[-c(1, 2)]
+WorkAround <- matrix(newlines)
+WorkAround <- gsub("             ", " NA NA ", WorkAround)
+split_columns <- strsplit(WorkAround, "\\s+")
+result <- do.call(rbind, split_columns)
+
+num_cols <- ncol(result)
+small_matrices <- list()
+for (i in seq(2, num_cols, by = 2)) {
+  small_matrix <- result[, c(1, i, i + 1)]
+  small_matrices[[length(small_matrices) + 1]] <- small_matrix
+}
+
+TheMonths <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+matrices_with_month <- list()
+
+for (i in seq_along(small_matrices)) {
+  small_matrix <- small_matrices[[i]]
+  month <- TheMonths[i]
+  small_matrix_with_month <- cbind(month, small_matrix)
+  matrices_with_month[[i]] <- small_matrix_with_month
+}
+
+combined_matrix <- do.call(rbind, matrices_with_month)
+combined_df <- as.data.frame(combined_matrix)
+colnames(combined_df) <- c("Month", "Day", "Sunrise", "Sunset")
+Data <- combined_df %>% filter(Sunrise != "NA")
+Data$Sunrise <- paste0(substr(Data$Sunrise, 1, 2), ":", substr(Data$Sunrise, 3, 4))
+Data$Sunset <- paste0(substr(Data$Sunset, 1, 2), ":", substr(Data$Sunset, 3, 4))
+
+Data$Sunrise <- hm(Data$Sunrise)
+Data$Sunset <- hm(Data$Sunset)
+
+SunData <- Data
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+
+html <- CivilTwilight
+html <- read_html(html)
+nodes <- html %>% html_nodes('main.usa-layout-docs#main-content')
+pre_element <- nodes %>% html_node('div > pre')
+text <- pre_element %>% html_text()
+
+lines <- strsplit(text, "\n")[[1]]
+lines <- lines[-1:-7]
+lines <- lines[-35:-36]
+lines <- lines[-3] #No need for hour minutes
+
+newlines <- lines[-c(1, 2)]
+WorkAround <- matrix(newlines)
+WorkAround <- gsub("             ", " NA NA ", WorkAround)
+split_columns <- strsplit(WorkAround, "\\s+")
+result <- do.call(rbind, split_columns)
+
+num_cols <- ncol(result)
+small_matrices <- list()
+for (i in seq(2, num_cols, by = 2)) {
+  small_matrix <- result[, c(1, i, i + 1)]
+  small_matrices[[length(small_matrices) + 1]] <- small_matrix
+}
+
+TheMonths <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+matrices_with_month <- list()
+
+for (i in seq_along(small_matrices)) {
+  small_matrix <- small_matrices[[i]]
+  month <- TheMonths[i]
+  small_matrix_with_month <- cbind(month, small_matrix)
+  matrices_with_month[[i]] <- small_matrix_with_month
+}
+
+combined_matrix <- do.call(rbind, matrices_with_month)
+combined_df <- as.data.frame(combined_matrix)
+colnames(combined_df) <- c("Month", "Day", "Dawn", "Dusk")
+Data <- combined_df %>% filter(Dawn != "NA")
+Data$Dawn <- paste0(substr(Data$Dawn, 1, 2), ":", substr(Data$Dawn, 3, 4))
+Data$Dusk <- paste0(substr(Data$Dusk, 1, 2), ":", substr(Data$Dusk, 3, 4))
+
+Data$Dawn <- hm(Data$Dawn)
+Data$Dusk <- hm(Data$Dusk)
+
+DawnData <- Data
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+TheData <- merge(DawnData, SunData, by = c("Month", "Day"), all.x = TRUE)
+
+TheData$Date <- make_date(year = 2024, month = match(TheData$Month, month.name), day = as.integer(TheData$Day))
+
+Data <- TheData %>% arrange(Date) %>% relocate(Date, .before = Dawn) %>% select(-Month, -Day)
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+plot <- ggplot(Data, aes(x = Date)) +
+  geom_line(aes(y = Sunrise, color = "Sunrise")) +
+  geom_line(aes(y = Sunset, color = "Sunset")) + 
+  geom_point(aes(y = Dawn, color = "Dawn"), size = 0.2) +
+  geom_point(aes(y = Dusk, color = "Dusk"), size = 0.2) +
+  labs(x = "Date", y = "Time", color = "Event", title = "Sunrise and Sunset") +
+  theme_minimal() +
+  scale_y_time(labels = scales::time_format("%H:%M"))
+
+
+dst_start <- ymd("2024-03-10") 
+dst_end <- ymd("2024-11-03") 
+
+DST_Data <- Data %>%
+  mutate(
+    Sunrise = case_when(
+      Date >= dst_start & Date < dst_end ~ Sunrise + hours(1),
+      TRUE ~ Sunrise
+    ),
+    Sunset = case_when(
+      Date >= dst_start & Date < dst_end ~ Sunset + hours(1),
+      TRUE ~ Sunset
+    ),
+    Dawn = case_when(
+      Date >= dst_start & Date < dst_end ~ Dawn + hours(1),
+      TRUE ~ Dawn
+    ),
+    Dusk = case_when(
+      Date >= dst_start & Date < dst_end ~ Dusk + hours(1),
+      TRUE ~ Dusk
+    ))
+
+current_time <- Sys.time()
+current_time <- as.Date(current_time)
+TheCurrentMonth <- format(current_time, "%m")
+TheCurrentMonth <- as.integer(TheCurrentMonth)
+InterestedMonths <- c(TheCurrentMonth-1, TheCurrentMonth, TheCurrentMonth+1)
+
+#PlotData <- DST_Data %>% filter(month(Date) %in% InterestedMonths)
+PlotData <- DST_Data 
+
+Today <- PlotData %>% filter(Date %in% current_time)
+sunrise_label <- paste("Sunrise:",format(Today$Sunrise[1], "%H:%M"))
+sunset_label <- paste("Sunset:", format(Today$Sunset[1], "%H:%M"))
+
+AllSunrise <- ggplot(PlotData, aes(x = Date)) +
+  geom_line(aes(y = Sunrise, color = "Sunrise")) +
+  geom_line(aes(y = Sunset, color = "Sunset")) + 
+  geom_point(aes(y = Dawn, color = "Dawn"), size = 0.2) +
+  geom_point(aes(y = Dusk, color = "Dusk"), size = 0.2) +
+  geom_vline(xintercept = current_time, linetype = "dashed", color = "red") +
+  labs(x = "Date", y = "Time", color = "Event", title = "Sunrise and Sunrise") +
+  theme_bw() +
+  scale_y_time(labels = scales::time_format("%H:%M")) +
+  geom_label(aes(x = current_time, y = Today$Sunrise[1], label = sunrise_label), color = "black", 
+             size = 3, vjust = -0.5, hjust = -0.5) +
+  geom_label(aes(x = current_time, y = Today$Sunset[1], label = sunset_label), color = "black", 
+             size = 3, vjust = -0.5, hjust = -0.5)
+
+#AllSunrise
+
+#ggsave(filename = "SunriseSunsets.png", AllSunrise, dpi = 600, width = 6, height = 4)
+
+DawnSunrise <- ggplot(PlotData, aes(x = Date)) +
+  geom_line(aes(y = Sunrise, color = "Sunrise")) + 
+  geom_point(aes(y = Dawn, color = "Dawn"), size = 0.2) +
+  labs(x = "Date", y = "Time", color = "Event", title = "Sunrise") +
+  theme_minimal() +
+  scale_y_time(labels = scales::time_format("%H:%M"))
+```
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+AllSunrise <- ggplotly(AllSunrise)
+AllSunrise
+```
+
+
+```{r}
+#| include: FALSE
+
+url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
+
+NOAA_Buoys <- function(url){
+data <- readLines(url)
+data <- gsub("    ", " ", data)
+data <- gsub("   ", " ", data)
+data <- gsub("  ", " ", data)
+headers1 <- strsplit(data[1], " ")[[1]]
+headers1 <- gsub("#", "", fixed = TRUE, headers1)
+headers2 <- strsplit(data[2], " ")[[1]]
+headers2 <- gsub("#", "", fixed = TRUE, headers2)
+
+# Remove the first line (headers) from the data
+data_subset <- data[-1:-2]
+
+data_matrix <- do.call(rbind, strsplit(data_subset, " "))
+df <- as.data.frame(data_matrix, stringsAsFactors = FALSE)
+colnames(df) <- headers1
+cols_to_convert <- c(1:5)
+df[, cols_to_convert] <- sapply(df[, cols_to_convert], as.numeric)
+#write.csv(df, "4-21-24-FtMcHenry.csv", row.names = FALSE)
+
+df$datetime <- ymd_hm(paste(df$YY, df$MM, df$DD, df$hh, df$mm, sep = " "))
+df <- df[, -(1:5)]
+df <- df %>% relocate(datetime, .before="WDIR")
+
+return(df)
+}
+```
+
+```{r}
+#| include: FALSE
+FtMcHenry <- NOAA_Buoys(url="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
+CurtisBay <- NOAA_Buoys(url="https://www.ndbc.noaa.gov/data/realtime2/CBCM2.txt")
+##KeyBridge1 <- NOAA_Buoys(url="https://www.ndbc.noaa.gov/data/realtime2/FSNM2.txt")
+#KeyBridge2 <- NOAA_Buoys(url="https://www.ndbc.noaa.gov/data/realtime2/FSKM2.txt")
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+FtMcHenry <- FtMcHenry %>% select(datetime, WTMP, ATMP, WDIR, WSPD, GST) %>% mutate(Site = "FtMcHenry")
+CurtisBay <- CurtisBay %>% select(datetime, WTMP, ATMP, WDIR, WSPD, GST) %>% mutate(Site = "CurtisBay")
+#KeyBridge <- KeyBridge %>% select(datetime, WTMP) %>% mutate(Site = "KeyBridge")
+
+#Data <- CurtisBay
+Data <- rbind(FtMcHenry, CurtisBay)
+
+Data$WTMP <- as.double(Data$WTMP)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data %>% mutate(WTMPF = (WTMP * 9/5) + 32)
+
+Data$ATMP <- as.double(Data$ATMP)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data %>% mutate(ATMPF = (ATMP * 9/5) + 32)
+
+Data$WSPD <- as.double(Data$WSPD)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data %>% mutate(WSPDK = (WSPD * 1.943844),
+                        WSPDM = (WSPD * 2.23694))
+
+Data$GST <- as.double(Data$GST)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data %>% mutate(GSTK = (GST * 1.943844),
+                        GSTM = (GST * 2.23694))
+
+xValue <- "datetime"
+yValue <- "WTMPF"
+myfactor <- "Site"
+
+Plot <- ggplot(Data, aes(x=.data[[xValue]], y = .data[[yValue]], color = .data[[myfactor]]))  +  geom_line(linewidth = 1) + labs(title = NULL, x = NULL, y = "Water Temperature (*F)") + theme_bw() + theme(legend.position = "right")
+```
+
+```{r}
+#| include: FALSE
+
+#WindSpeed
+PlotData <- Data %>% filter(Site == "FtMcHenry")
+
+CurrentDate <- Sys.Date()
+
+PlotData <- PlotData %>% filter(datetime >= (CurrentDate - 7) & datetime <= (CurrentDate + 1))
+
+WindSpeed <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = WSPDK, color="Wind")) +
+  geom_point(aes(y = GSTK, color="Gust"), size=1) + 
+  labs(title = NULL, x = NULL, y = "Wind Speed (knots)") +
+  theme_bw() + theme(legend.position = "right")
+
+Windspeed <- WindSpeed + geom_hline(yintercept = 10, linetype = "dashed", color = "red") + geom_hline(yintercept = 21, linetype = "dashed", color = "red") 
+#Windspeed
+
+#ggsave(filename = "Windspeed.png", Windspeed, dpi = 600, width = 6, height = 4)
+```
+
+### Wind History 
+
+```{r}
+#| echo: FALSE
+Windspeed <- ggplotly(Windspeed)
+Windspeed
+```
+```{r}
+#| include: FALSE
+#| warning: FALSE
+
+url <- "https://forecast.weather.gov/showsigmz.php?mz=ANZ538&product1=Small+Craft+Advisory"
+url <- rvest::read_html(url)
+nodes <- url %>% html_nodes('body')
+pre_element <- nodes %>% html_node('pre')
+
+text <- html_text(pre_element)
+lines <- strsplit(text, "\n")
+lines <- unlist(lines)
+EDT_lines <- grep("EDT", lines, ignore.case = TRUE, value = TRUE)
+small_craft_lines <- grep("SMALL CRAFT ADVISORY", lines, ignore.case = TRUE, value = TRUE)
+When_lines <- grep("WHEN", lines, ignore.case = TRUE, value = TRUE)
+
+if (length(small_craft_lines) != 0){
+
+Issued <- EDT_lines[1]
+Time <- When_lines[1]
+
+Issued
+Issued1 <- gsub(" EDT", "", Issued)
+IssuedSplit <- strsplit(Issued1, " ")[[1]]
+
+if (nchar(IssuedSplit[1]) == 4){
+hour <- as.integer(substr(IssuedSplit[1], 1, 2))
+minute <- as.integer(substr(IssuedSplit[1], 3, 4))
+am_pm <- substr(IssuedSplit[2], 1, 2)
+month <- match(IssuedSplit[4], month.abb) # Convert month abbreviation to numeric
+day <- as.integer(IssuedSplit[5])
+year <- as.integer(IssuedSplit[6])
+} else {
+hour <- as.integer(substr(IssuedSplit[1], 1, 1))
+minute <- as.integer(substr(IssuedSplit[1], 2, 3))
+am_pm <- substr(IssuedSplit[2], 1, 2)
+month <- match(IssuedSplit[4], month.abb) # Convert month abbreviation to numeric
+day <- as.integer(IssuedSplit[5])
+year <- as.integer(IssuedSplit[6])  
+  
+}
+
+if (am_pm == "PM" & hour != 12) {
+  hour <- hour + 12
+} else if (am_pm == "AM" & hour == 12) {
+  hour <- 0
+}
+
+parsed_date <- ymd_hms(paste(year, month, day, hour, minute, "00", sep = "-"))
+weekday <- weekdays(parsed_date)
+
+#Duration SCA
+#When_lines
+When_Clean <- sub(".*From", "From", When_lines)
+When_Clean <- sub(".*Until", "Until", When_lines)
+When_Clean <- gsub(".", "", fixed = TRUE, When_Clean)
+WhenSplit <- strsplit(When_Clean, " ")[[1]]
+
+if (length(WhenSplit) == 8){
+StartTime <- paste(WhenSplit[2], WhenSplit[3], sep = "")
+StartTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", StartTime))
+  if (!str_detect(StartTime, "AM")){
+    StartTime1 <- gsub(" PM", "", StartTime)
+    StartTime2 <- hms(paste0(StartTime1, ":00"))
+    TheStartTime <- StartTime2 + hours(12)
+    } else {StartTime1 <- gsub(" AM", "", StartTime)
+    TheStartTime <- hms(paste0(StartTime1, ":00"))
+    }
+
+EndTime <- paste(WhenSplit[5], WhenSplit[6], sep = "")
+EndTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", EndTime))
+
+  if (!str_detect(EndTime, "AM")){
+    EndTime1 <- gsub(" PM", "", EndTime)
+    EndTime2 <- hms(paste0(EndTime1, ":00"))
+    TheEndTime <- EndTime2 + hours(12)
+    } else {EndTime1 <- gsub(" AM", "", EndTime)
+    TheEndTime <- hms(paste0(EndTime1, ":00"))
+    }
+
+Day <- WhenSplit[8]
+
+  if (weekday != Day) {
+    days_to_add <- match(Day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")) - match(weekday, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+  
+  new_date <- parsed_date + days(days_to_add)
+  new_date <- as.Date(new_date)
+
+  SCA_Start <- ymd_hms(paste(new_date, TheStartTime))
+  SCA_End <- ymd_hms(paste(new_date, TheEndTime))
+  } else {
+    new_date <- parsed_date
+    new_date <- as.Date(new_date)
+  
+    SCA_Start <- ymd_hms(paste(new_date, TheStartTime))
+    SCA_End <- ymd_hms(paste(new_date, TheEndTime))    
+    }
+
+
+} else if (length(WhenSplit) == 10){
+  
+  StartTime <- paste(WhenSplit[2], WhenSplit[3], sep = "")
+  StartTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", StartTime))
+
+  if (!str_detect(StartTime, "AM")){
+    StartTime1 <- gsub(" PM", "", StartTime)
+    StartTime2 <- hms(paste0(StartTime1, ":00"))
+    TheStartTime <- StartTime2 + hours(12)
+  } else {StartTime1 <- gsub(" AM", "", StartTime)
+    TheStartTime <- hms(paste0(StartTime1, ":00"))
+  }
+
+  EndTime <- paste(WhenSplit[7], WhenSplit[8], sep = "")
+  EndTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", EndTime))
+
+  if (!str_detect(EndTime, "AM")){
+    EndTime1 <- gsub(" PM", "", EndTime)
+    EndTime2 <- hms(paste0(EndTime1, ":00"))
+    TheEndTime <- EndTime2 + hours(12)
+    } else {EndTime1 <- gsub(" AM", "", EndTime)
+      TheEndTime <- hms(paste0(EndTime1, ":00"))
+    }
+
+  Day <- WhenSplit[10]
+
+    if (weekday != Day) {
+      days_to_add <- match(Day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")) - match(weekday, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+  
+    old_date <- parsed_date 
+    old_date <- as.Date(old_date)
+    
+    new_date <- parsed_date + days(days_to_add)
+    new_date <- as.Date(new_date)
+
+    SCA_Start <- ymd_hms(paste(old_date, TheStartTime))
+    SCA_End <- ymd_hms(paste(new_date, TheEndTime))
+    }
+  
+  
+
+} else if (length(WhenSplit) == 5){
+
+  EndTime <- paste(WhenSplit[2], WhenSplit[3], sep = "")
+  EndTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", EndTime))
+
+  if (!str_detect(EndTime, "AM")){
+    EndTime1 <- gsub(" PM", "", EndTime)
+    EndTime2 <- hms(paste0(EndTime1, ":00"))
+    TheEndTime <- EndTime2 + hours(12)
+  } else {EndTime1 <- gsub(" AM", "", EndTime)
+    TheEndTime <- hms(paste0(EndTime1, ":00"))
+  }
+
+
+  Day <- WhenSplit[5]
+
+  if (weekday != Day) {
+    days_to_add <- match(Day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")) - match(weekday, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+  
+  old_date <- parsed_date 
+  old_date <- as.Date(old_date)
+  
+  new_date <- parsed_date + days(days_to_add)
+  new_date <- as.Date(new_date)
+
+  SCA_Start <- parsed_date #Since Until
+  SCA_End <- ymd_hms(paste(new_date, TheEndTime))
+} else {
+  
+  new_date <- parsed_date
+  new_date <- as.Date(new_date)
+
+  SCA_Start <- ymd_hms(paste(new_date, TheStartTime))
+  SCA_End <- ymd_hms(paste(new_date, TheEndTime))
+  }
+  
+  
+  } else if (length(WhenSplit) == 6){
+
+  EndTime <- paste(WhenSplit[2], WhenSplit[3], sep = "")
+  EndTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", EndTime))
+
+  if (!str_detect(EndTime, "AM")){
+    EndTime1 <- gsub(" PM", "", EndTime)
+    EndTime2 <- hms(paste0(EndTime1, ":00"))
+    TheEndTime <- EndTime2 + hours(12)
+  } else {EndTime1 <- gsub(" AM", "", EndTime)
+    TheEndTime <- hms(paste0(EndTime1, ":00"))
+  }
+
+
+  Day <- WhenSplit[6]
+  
+  if(Day == "afternoon"){Day <- weekday}
+
+  if (weekday != Day) {
+    days_to_add <- match(Day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")) - match(weekday, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+  
+  old_date <- parsed_date 
+  old_date <- as.Date(old_date)
+  
+  new_date <- parsed_date + days(days_to_add)
+  new_date <- as.Date(new_date)
+
+  SCA_Start <- parsed_date #Since Until
+  SCA_End <- ymd_hms(paste(new_date, TheEndTime))
+} else {
+  
+  new_date <- parsed_date
+  new_date <- as.Date(new_date)
+
+  SCA_Start <- parsed_date #Since Until
+  #SCA_Start <- ymd_hms(paste(new_date, TheStartTime))
+  SCA_End <- ymd_hms(paste(new_date, TheEndTime))
+  }
+  
+  
+  } else {
+  
+StartTime <- paste(WhenSplit[2], WhenSplit[3], sep = "")
+StartTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", StartTime))
+
+if (!str_detect(StartTime, "AM")){
+  StartTime1 <- gsub(" PM", "", StartTime)
+  StartTime2 <- hms(paste0(StartTime1, ":00"))
+  TheStartTime <- StartTime2 + hours(12)
+} else {StartTime1 <- gsub(" AM", "", StartTime)
+  TheStartTime <- hms(paste0(StartTime1, ":00"))
+}
+
+#TheStartTime
+
+EndTime <- paste(WhenSplit[6])
+if (EndTime == "midnight"){
+  TheEndTime <- hms("23:59:59")
+} else {
+EndTime <- gsub("AM", ":00 AM", gsub("PM", ":00 PM", EndTime))
+
+if (!str_detect(EndTime, "AM")){
+  EndTime1 <- gsub(" PM", "", EndTime)
+  EndTime2 <- hms(paste0(EndTime1, ":00"))
+  TheEndTime <- EndTime2 + hours(12)
+} else {EndTime1 <- gsub(" AM", "", EndTime)
+  TheEndTime <- hms(paste0(EndTime1, ":00"))
+}
+}
+
+#TheEndTime
+
+Day <- WhenSplit[8]
+
+if (weekday != Day) {
+  days_to_add <- match(Day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")) - match(weekday, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+  
+  new_date <- parsed_date + days(1)
+  new_date <- as.Date(new_date)
+
+  SCA_Start <- ymd_hms(paste(new_date, TheStartTime))
+  SCA_End <- ymd_hms(paste(new_date, TheEndTime))
+} else{
+  new_date <- parsed_date
+  new_date <- as.Date(new_date)
+
+  SCA_Start <- ymd_hms(paste(new_date, TheStartTime))
+  SCA_End <- ymd_hms(paste(new_date, TheEndTime))  
+}
+
+}
+
+#print(paste0(parsed_date, "From ", SCA_Start, " To ", SCA_End))
+}
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+
+
+HourlyWeatherForecast <- "https://forecast.weather.gov/MapClick.php?lat=39.2736&lon=-76.6264&unit=0&lg=english&FcstType=digital"
+
+
+FortyEightHour <- function(url){
+url <- read_html(url)
+nodes <- url %>% html_nodes('body')
+tablenodes <- nodes %>% html_nodes('table')
+TheTable <- tablenodes[5] %>% html_table()
+TheTable <- TheTable[[1]]
+TheTable <- TheTable[-1,]
+#TheTable
+
+row_indices <- which(TheTable[, 1] == "Date")
+
+if (length(row_indices) == 2){
+  EndFirstTable <- row_indices[[2]]
+  LastRow <- nrow(TheTable)
+  
+  Table1 <- TheTable[1:(EndFirstTable -1),]
+  Table2 <- TheTable[EndFirstTable:LastRow,]
+  
+  TheTables <- list(Table1, Table2)
+}
+
+#TheTables[[2]]
+
+TableProcessing <- function(x){
+ TableX <- x
+ col_indices <- which(grepl("/", TableX[1, ])) 
+ 
+ if (!any(col_indices== 2)){
+   TheSoleSurvivor <- TableX[1, col_indices[1]]
+   TheBits <- str_split(TheSoleSurvivor, "/") %>% unlist()
+   TheNiblets <- as.integer(TheBits[2])
+   if(TheNiblets != 1){TheNiblets <- TheNiblets -1
+                       TheNiblets <- as.character(TheNiblets)
+                       TheNiblets <- paste0("0", TheNiblets)}
+   Reassembled <- paste0(TheBits[1], "/", TheNiblets)
+   TableX[1,2] <- Reassembled
+   col_indices <- which(grepl("/", TableX[1, ])) 
+ }
+ 
+ if(length(col_indices) == 2){
+   StartIndex <- col_indices[1]
+   SecondIndex <- col_indices[2]
+ }
+ 
+ EndIndex <- ncol(TableX)
+ TheFirstCol <- TableX[,1]
+ TheFirstCol <- data.frame(TheFirstCol)
+ TheFirstCol <- TheFirstCol %>% pull(.)
+ TheStrings <- c("(%)", "(°F)", "(EDT)", "(mph)")
+ TheFirstCol <- Luciernaga::NameCleanUp(TheFirstCol, TheStrings)
+ TheFirstCol <- Luciernaga::NameCleanUp(TheFirstCol, " ")
+ TheFirstCol <- data.frame(TheFirstCol)
+ 
+ TheFirstSet <- TableX[,StartIndex:(SecondIndex - 1)]
+ TheSecondSet <- TableX[,SecondIndex:EndIndex] 
+ 
+ FirstDate <- TheFirstSet[1,1]
+ TheFirstSet[1,] <- FirstDate
+ FirstComplete <- cbind(TheFirstCol, TheFirstSet)
+ FirstComplete <- t(FirstComplete)
+ FirstComplete <- data.frame(FirstComplete)
+ colnames(FirstComplete) <- FirstComplete[1,]
+ FirstComplete <- FirstComplete[-1,]
+ row.names(FirstComplete) <- NULL
+ 
+ SecondDate <- TheSecondSet[1,1] #Add Conditional Workaround
+ TheSecondSet[1,] <- SecondDate
+ SecondComplete <- cbind(TheFirstCol, TheSecondSet)
+ SecondComplete <- t(SecondComplete)
+ SecondComplete <- data.frame(SecondComplete)
+ colnames(SecondComplete) <- SecondComplete[1,]
+ SecondComplete <- SecondComplete[-1,]
+ row.names(SecondComplete) <- NULL
+ 
+ if (all(colnames(FirstComplete) %in% colnames(SecondComplete))){
+   TheDataFrame <- bind_rows(FirstComplete, SecondComplete)
+   TheDataFrame <- try({TheDataFrame <- TheDataFrame %>% select(-matches("\\.\\.\\.14"))}, silent = TRUE)
+ }
+ 
+ return(TheDataFrame)
+}
+
+TheAssembledData <- map(.x=TheTables, .f=TableProcessing) %>% bind_rows()
+
+return(TheAssembledData)
+
+}
+
+# [1] "* WHEN...Until noon EDT Thursday."
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+
+
+MyData <- FortyEightHour(HourlyWeatherForecast)
+
+MyData$Date <- paste(MyData$Date, "2024", sep="/")
+MyData$Date <- lubridate::mdy(MyData$Date)
+MyData$Hour <- paste0(MyData$Hour, ":00:00")
+MyData$Hour <- lubridate::hms(MyData$Hour)
+MyData$Hour[MyData$Hour == as.period(0)] <- hms("23:59:59")
+
+MyData <- MyData %>% mutate(datetime = ymd(Date) + hms(Hour)) %>% relocate(datetime, .before = Date)
+
+MyData$Temperature <- as.numeric(MyData$Temperature)
+MyData$Dewpoint <- as.numeric(MyData$Dewpoint)
+MyData$HeatIndex <- as.numeric(MyData$HeatIndex)
+MyData$SurfaceWind <- as.numeric(MyData$SurfaceWind)
+MyData$Gust <- as.numeric(MyData$Gust)
+MyData$SkyCover <- as.numeric(MyData$SkyCover)
+MyData$RelativeHumidity <- as.numeric(MyData$RelativeHumidity)
+
+MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+
+if(exists("SCA_Start") && !is.null(SCA_Start)){
+  
+  PlotData <- MyData
+  
+  PredictedWindSpeed <- ggplot(PlotData, aes(x = datetime)) +
+  geom_rect(aes(xmin = SCA_Start, xmax = SCA_End, ymin = -Inf, ymax = Inf, fill = "SCA"), 
+            alpha = 0.3) +
+  geom_line(aes(y = SurfaceWindKnots, color = "Wind")) +
+  geom_point(aes(y = Gust, color="Gust"), size=2) +
+  labs(title = NULL, x = NULL, y = "Wind Speed (knots)", caption = paste0("Last Updated: ", parsed_date)) + ylim(0, NA) + 
+  theme_bw() +
+  theme(legend.position = "right", plot.caption = element_text(size = 8)) +
+  geom_hline(yintercept = 10, linetype = "dashed", color = "red") + 
+  geom_hline(yintercept = 21, linetype = "dashed", color = "red") +
+  scale_fill_manual(name = "Legend", values = "lightblue", labels = "SCA") 
+  
+  #PredictedWindSpeed 
+  
+  #ggsave(filename = "PredictedWindSpeed.png", PredictedWindSpeed, dpi = 600, width = 6, height = 4) 
+  
+  
+} else {
+  
+    PlotData <- MyData
+  
+  PredictedWindSpeed <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = SurfaceWindKnots, color = "Wind")) +
+  geom_point(aes(y = Gust, color="Gust"), size=2) +
+  labs(title = NULL, x = NULL, y = "Wind Speed (knots)") +
+  theme_bw() +
+  theme(legend.position = "right") +
+  geom_hline(yintercept = 10, linetype = "dashed", color = "red") + 
+  geom_hline(yintercept = 21, linetype = "dashed", color = "red") 
+  
+  #PredictedWindSpeed
+  
+  #ggsave(filename = "PredictedWindSpeed.png", PredictedWindSpeed, dpi = 600, width = 6, height = 4) 
+}
+```
+
+### Wind Forecast
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+PredictedWindSpeed <- ggplotly(PredictedWindSpeed)
+PredictedWindSpeed
+```
+
+### Rainfall History
+
+```{r}
+#| include: false
+url <- "https://forecast.weather.gov/data/obhistory/KDMH.html"
+
+url <- rvest::read_html(url)
+nodes <- url %>% html_nodes('tbody')
+TheTable <- html_table(nodes)
+
+TableNames <- c("Date", "Time", "WindMPH", "VisMi", "Weather", "SkyCond", "AirTempF", "Dwpt", "Min6hr", "Max6hr", "RelativeHumidity", "WindChillF", 
+  "HeatIndexF", "AltimeterIn", "SeaLevelmb", "Precip1hr", "Precip3hr", "Precip6hr")
+
+TheTable <- data.frame(TheTable)
+colnames(TheTable) <- TableNames
+
+TheTable$Date <- as.character(TheTable$Date)
+
+current_time <- Sys.time()
+current_date <- as.Date(current_time)
+current_month <- format(as.Date(current_date), "%Y-%m")
+
+
+if (any(TheTable$Date == 1)) {
+  LastMonth <- current_date - months(1)
+  LastMonth <- format(LastMonth, "%Y-%m")
+  
+  if (any(TheTable$Date >= 28)) {
+    TheTable$Date <- paste(LastMonth, TheTable$Date, sep = "-")
+  } else if (any(TheTable$Date >= 1 & TheTable$Date < 28)) {
+    TheTable$Date <- paste(current_month, TheTable$Date, sep = "-")
+  }
+} else {
+  TheTable$Date <- paste(current_month, TheTable$Date, sep = "-")
+}
+
+TheTable$Date <- ymd(TheTable$Date)
+
+TheInitialData <- TheTable %>% select(Date, Time, AirTempF, Precip1hr)
+
+max_y <- max(TheInitialData$Precip1hr, na.rm = TRUE)
+
+TheInitialData <- TheInitialData %>% mutate(datetime = ymd(Date) + hm(Time)) %>% relocate(datetime, .before = Date)
+TheInitialData$Precip1hr[is.na(TheInitialData$Precip1hr)] <- 0
+
+TotalPrecipitation <- TheInitialData %>% group_by(Date) %>% summarise(TotalPrecipitation = sum(Precip1hr, na.rm = TRUE))
+TotalRainfallPerDay <- TotalPrecipitation %>% mutate(datetime = as.POSIXct(Date) + hours(12))
+
+InitialPlot <- ggplot(TheInitialData, aes(x = datetime, y = Precip1hr)) +
+  geom_col(fill = "darkblue") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  labs(y = "Precipitation (in)")
+
+# Add text for total precipitation centered at noon
+PreviousRainfall <- InitialPlot + geom_label(data = TotalRainfallPerDay, aes(x = datetime, y = max_y, label = round(TotalPrecipitation, 2)), fill = "white", color = "black", size = 3, label.padding = unit(0.3, "lines"))
+```
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+PreviousRainfall <- ggplotly(PreviousRainfall)
+PreviousRainfall
+#ggsave(filename = "PreviousRainfall.png", PreviousRainfall, dpi = 600, width = 6, height = 4) 
+```
+
+### Tide
+
+```{r}
+#| include: false
+Tides <- "https://marineweather.net/tide/fort-mchenry-marsh-patapsco-river-md-tides"
+```
+
+```{r}
+#| include: false
+html <- Tides
+html <- read_html(html)
+nodes <- html %>% html_nodes('table')
+table <- nodes %>% html_table()
+#table
+```
+
+```{r}
+#| include: false
+Data <- data.frame(table)
+Data <- Data %>% mutate(Date = sub("^[A-Za-z]+\\s+", "", Date))
+Data$Date <- paste0(Data$Date, ", 2024")
+Data$Date <- mdy(Data$Date)
+Data$Time <- hm(Data$Time)
+
+Data$Feet <- gsub(" ft", "", Data$Feet)
+Data$Feet <- as.numeric(Data$Feet)
+
+Data$Tide <- gsub(" ", "", Data$Tide)
+Data$Tide <- gsub("High", "", Data$Tide)
+Data$Tide <- gsub("Low", "", Data$Tide)
+
+Data$Tide <- factor(Data$Tide)
+
+#Data
+
+Data <- Data %>% mutate(datetime = paste(Date, Time))
+Data$datetime <- lubridate::ymd_hms(Data$datetime)
+Data <- Data %>% relocate(datetime, .before = Date)
+#Data
+
+#write.csv(Data, "TideData_05022024.csv", row.names = FALSE)
+```
+
+```{r}
+#| include: FALSE
+PlotData <- Data #%>% filter(datetime >= as.POSIXct("2024-04-28") & datetime <= as.POSIXct("2024-05-10"))
+
+current_time <- Sys.time()
+
+Tides <- ggplot(PlotData, aes(x = datetime, y = Feet, color = Tide)) +
+  geom_line() +
+  labs(x = "Date", y = "Feet", color = "Tide") +
+  theme_bw() +
+  geom_vline(xintercept = current_time, linetype = "dashed", color = "red")
+
+#ggsave(filename = "Tides.png", Tides, dpi = 600, width = 6, height = 4)
+```
+
+```{r}
+#| echo: FALSE
+
+Tides <- ggplotly(Tides)
+Tides
+```
+
+

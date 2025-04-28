@@ -10,6 +10,9 @@ project:
 
 ```{r}
 library(Streptoprocne)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
 ```
 
 ```{r}
@@ -28,6 +31,96 @@ HourlyWeatherForecast <- FortyEightHour(url)
 ```{r}
 url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
 FtMcHenry <- NOAA_Buoys(x="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
+```
+
+```{r}
+year <- as.integer(format(Sys.Date(), "%Y"))
+
+TheData <- left_join(SunriseTable, TwilightTable, by=c("Month", "Day"))
+
+TheData$Date <- lubridate::make_date(year = year,
+ month = match(TheData$Month, month.name), day = as.integer(TheData$Day))
+
+Data <- TheData |> arrange(Date)|> relocate(Date, .before = Sunrise) |>
+   select(-Month, -Day)
+
+tz <- "America/New_York"
+dates <- seq(as.POSIXct(paste0(year, "-01-01"), tz = tz),
+  as.POSIXct(paste0(year, "-12-31"), tz = tz),by = "day")
+dst_changes <- which(diff(lubridate::dst(dates)) != 0)
+dst_start <- dates[dst_changes[1] + 1] 
+dst_end <- dates[dst_changes[2] + 1]
+
+DST_Data <- Data |> mutate(
+      Sunrise = case_when(
+      Date >= dst_start & Date < dst_end ~ Sunrise + hours(1),
+      TRUE ~ Sunrise),
+    Sunset = case_when(
+      Date >= dst_start & Date < dst_end ~ Sunset + hours(1),
+      TRUE ~ Sunset),
+    Dawn = case_when(
+      Date >= dst_start & Date < dst_end ~ Dawn + hours(1),
+      TRUE ~ Dawn),
+    Dusk = case_when(
+      Date >= dst_start & Date < dst_end ~ Dusk + hours(1),
+      TRUE ~ Dusk))
+
+current_time <- Sys.time()
+current_time <- as.Date(current_time)
+TheCurrentMonth <- format(current_time, "%m")
+TheCurrentMonth <- as.integer(TheCurrentMonth)
+InterestedMonths <- c(TheCurrentMonth-1, TheCurrentMonth, TheCurrentMonth+1)
+PlotData <- DST_Data 
+Today <- PlotData |> filter(Date %in% current_time)
+sunrise_label <- paste("Sunrise:",format(Today$Sunrise[1], "%H:%M"))
+sunset_label <- paste("Sunset:", format(Today$Sunset[1], "%H:%M"))
+```
+
+```{r}
+#| include: FALSE
+#| warning: FALSE
+
+plot <- ggplot(DST_Data, aes(x = Date)) +
+  geom_line(aes(y = Sunrise, color = "Sunrise")) +
+  geom_line(aes(y = Sunset, color = "Sunset")) + 
+  geom_point(aes(y = Dawn, color = "Dawn"), size = 0.2) +
+  geom_point(aes(y = Dusk, color = "Dusk"), size = 0.2) +
+  labs(x = "Date", y = "Time", color = "Event", title = "Sunrise and Sunset") +
+  theme_minimal() +
+  scale_y_time(labels = scales::time_format("%H:%M"))
+
+AllSunrise <- ggplot(PlotData, aes(x = Date)) +
+  geom_line(aes(y = Sunrise, color = "Sunrise")) +
+  geom_line(aes(y = Sunset, color = "Sunset")) + 
+  geom_point(aes(y = Dawn, color = "Dawn"), size = 0.2) +
+  geom_point(aes(y = Dusk, color = "Dusk"), size = 0.2) +
+  geom_vline(xintercept = current_time, linetype = "dashed", color = "red") +
+  labs(x = "Date", y = "Time", color = "Event", title = "Sunrise and Sunrise") +
+  theme_bw() +
+  scale_y_time(labels = scales::time_format("%H:%M")) +
+  geom_label(aes(x = current_time, y = Today$Sunrise[1], label = sunrise_label), color = "black", 
+             size = 3, vjust = -0.5, hjust = -0.5) +
+  geom_label(aes(x = current_time, y = Today$Sunset[1], label = sunset_label), color = "black", 
+             size = 3, vjust = -0.5, hjust = -0.5)
+
+DawnSunrise <- ggplot(PlotData, aes(x = Date)) +
+  geom_line(aes(y = Sunrise, color = "Sunrise")) + 
+  geom_point(aes(y = Dawn, color = "Dawn"), size = 0.2) +
+  labs(x = "Date", y = "Time", color = "Event", title = "Sunrise") +
+  theme_minimal() +
+  scale_y_time(labels = scales::time_format("%H:%M"))
+```
+
+## Both
+
+```{r}
+plotly::ggplotly(AllSunrise)
+```
+
+## Dawn
+
+```{r}
+plotly::ggplotly(DawnSunrise)
 ```
 
 
