@@ -1,0 +1,33 @@
+---
+format:
+  dashboard:
+    orientation: columns
+aliases: 
+  - home.html
+project:
+  output-dir: docs/
+---
+
+```{r}
+library(Streptoprocne)
+```
+
+```{r}
+url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=0&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
+SunriseTable <- Streptoprocne::SunriseSunset(x=url)
+
+url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=2&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
+TwilightTable <- CivilTwilight(x=url)
+```
+
+```{r}
+url <- "https://forecast.weather.gov/MapClick.php?lat=39.2736&lon=-76.6264&unit=0&lg=english&FcstType=digital"
+HourlyWeatherForecast <- FortyEightHour(url)
+```
+
+```{r}
+url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
+FtMcHenry <- NOAA_Buoys(x="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
+```
+
+
