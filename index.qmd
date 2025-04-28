@@ -177,6 +177,36 @@ MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
   labs(title = NULL, x = NULL, y = "Air Temperature (F)") +
   theme_bw() +
   theme(legend.position = "right")
+
+  PredictedDewpoint <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = Dewpoint, color = "Dewpoint")) +
+  geom_point(aes(y = Dewpoint, color="Dewpoint"), size=2) +
+  labs(title = NULL, x = NULL, y = "Dewpoint") +
+  theme_bw() +
+  theme(legend.position = "right")
+
+  PredictedRelativeHumidity <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = RelativeHumidity, color = "RelativeHumidity")) +
+  geom_point(aes(y = RelativeHumidity, color="RelativeHumidity"), size=2) +
+  labs(title = NULL, x = NULL, y = "Relative Humidity") +
+  theme_bw() +
+  theme(legend.position = "right")
+
+  PredictedSkyCover <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = SkyCover, color = "SkyCover")) +
+  geom_point(aes(y = SkyCover, color="SkyCover"), size=2) +
+  labs(title = NULL, x = NULL, y = "SkyCover") +
+  theme_bw() +
+  theme(legend.position = "right")
+
+  PlotData$PrecipitationPotential <- as.numeric(PlotData$PrecipitationPotential)
+
+  PredictedPrecipitationPotential <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = PrecipitationPotential, color = "PrecipitationPotential")) +
+  geom_point(aes(y = PrecipitationPotential, color="PrecipitationPotential"), size=2) +
+  labs(title = NULL, x = NULL, y = "Precipitation Potential") +
+  theme_bw() +
+  theme(legend.position = "right")
 ```
 
 ```{r}
@@ -240,6 +270,32 @@ PreviousRainfall <- InitialPlot + geom_label(data = TotalRainfallPerDay, aes(x =
 ```
 
 ```{r}
+PlotData <- TheInitialData
+
+PlotData$RelativeHumidity <- gsub("%", "", fixed=TRUE, PlotData$RelativeHumidity)
+PlotData$RelativeHumidity <- as.numeric(PlotData$RelativeHumidity)
+
+Dewpoint <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = Dwpt, color="Dwpt"), linewidth=0.5) +
+  geom_point(aes(y = Dwpt, color="Dwpt"), size=0.5) + 
+  labs(title = NULL, x = NULL, y = "Dewpoint") +
+  theme_bw() + theme(legend.position = "right")
+
+RelativeHumidity <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = RelativeHumidity, color="RelativeHumidity"), linewidth=0.5) +
+  geom_point(aes(y = RelativeHumidity, color="RelativeHumidity"), size=0.5) + 
+  labs(title = NULL, x = NULL, y = "RelativeHumidity") +
+  theme_bw() + theme(legend.position = "right")
+
+Barometer <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = SeaLevelmb, color="SeaLevelmb"), linewidth=0.5) +
+  geom_point(aes(y = SeaLevelmb, color="SeaLevelmb"), size=0.5) + 
+  labs(title = NULL, x = NULL, y = "SeaLevelmb") +
+  theme_bw() + theme(legend.position = "right")
+
+```
+
+```{r}
 # Tides
 url <- "https://marineweather.net/tide/fort-mchenry-marsh-patapsco-river-md-tides"
 
@@ -297,6 +353,16 @@ plotly::ggplotly(AtmosphericTemperature)
 plotly::ggplotly(PredictedAirTemperature)
 ```
 
+#### Dewpoint
+```{r}
+plotly::ggplotly(Dewpoint)
+```
+
+#### Dewpoint Forecast 
+```{r}
+plotly::ggplotly(PredictedDewpoint)
+```
+
 ### Third Row {.tabset}
 
 #### Rainfall
@@ -307,6 +373,11 @@ plotly::ggplotly(PreviousRainfall)
 #### Rainfall Forecast
 ```{r}
 plotly::ggplotly(PreviousRainfall)
+```
+
+#### Precipitation Potential
+```{r}
+plotly::ggplotly(PredictedPrecipitationPotential)
 ```
 
 #
@@ -332,6 +403,21 @@ plotly::ggplotly(TidalData)
 plotly::ggplotly(WaterTemperature)
 ```
 
+#### Relative Humidity 
+```{r}
+plotly::ggplotly(RelativeHumidity)
+```
+
+#### Relative Humidity Forecast
+```{r}
+plotly::ggplotly(PredictedRelativeHumidity)
+```
+
+#### SkyCover Forecast
+```{r}
+plotly::ggplotly(PredictedSkyCover)
+```
+
 ### Third Row {.tabset}
 
 #### Windspeed
@@ -342,4 +428,9 @@ plotly::ggplotly(Windspeed)
 #### Windspeed Forecast
 ```{r}
 plotly::ggplotly(PredictedWindSpeed)
+```
+
+#### Barometer
+```{r}
+plotly::ggplotly(Barometer)
 ```
