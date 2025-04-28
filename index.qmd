@@ -2,6 +2,7 @@
 format:
   dashboard:
     orientation: columns
+    scrolling: true
 aliases: 
   - home.html
 project:
@@ -21,16 +22,6 @@ SunriseTable <- Streptoprocne::SunriseSunset(x=url)
 
 url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=2&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
 TwilightTable <- CivilTwilight(x=url)
-```
-
-```{r}
-url <- "https://forecast.weather.gov/MapClick.php?lat=39.2736&lon=-76.6264&unit=0&lg=english&FcstType=digital"
-HourlyWeatherForecast <- FortyEightHour(url)
-```
-
-```{r}
-url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
-FtMcHenry <- NOAA_Buoys(x="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
 ```
 
 ```{r}
@@ -89,19 +80,7 @@ plot <- ggplot(DST_Data, aes(x = Date)) +
   theme_minimal() +
   scale_y_time(labels = scales::time_format("%H:%M"))
 
-AllSunrise <- ggplot(PlotData, aes(x = Date)) +
-  geom_line(aes(y = Sunrise, color = "Sunrise")) +
-  geom_line(aes(y = Sunset, color = "Sunset")) + 
-  geom_point(aes(y = Dawn, color = "Dawn"), size = 0.2) +
-  geom_point(aes(y = Dusk, color = "Dusk"), size = 0.2) +
-  geom_vline(xintercept = current_time, linetype = "dashed", color = "red") +
-  labs(x = "Date", y = "Time", color = "Event", title = "Sunrise and Sunrise") +
-  theme_bw() +
-  scale_y_time(labels = scales::time_format("%H:%M")) +
-  geom_label(aes(x = current_time, y = Today$Sunrise[1], label = sunrise_label), color = "black", 
-             size = 3, vjust = -0.5, hjust = -0.5) +
-  geom_label(aes(x = current_time, y = Today$Sunset[1], label = sunset_label), color = "black", 
-             size = 3, vjust = -0.5, hjust = -0.5)
+AllSunrise <- plot
 
 DawnSunrise <- ggplot(PlotData, aes(x = Date)) +
   geom_line(aes(y = Sunrise, color = "Sunrise")) + 
@@ -109,18 +88,241 @@ DawnSunrise <- ggplot(PlotData, aes(x = Date)) +
   labs(x = "Date", y = "Time", color = "Event", title = "Sunrise") +
   theme_minimal() +
   scale_y_time(labels = scales::time_format("%H:%M"))
+
+DuskSunset <- ggplot(PlotData, aes(x = Date)) +
+  geom_line(aes(y = Sunset, color = "Sunset")) + 
+  geom_point(aes(y = Dusk, color = "Dusk"), size = 0.2) +
+  labs(x = "Date", y = "Time", color = "Event", title = "Sunset") +
+  theme_minimal() +
+  scale_y_time(labels = scales::time_format("%H:%M"))
 ```
 
-## Both
 
 ```{r}
-plotly::ggplotly(AllSunrise)
+url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
+FtMcHenry <- NOAA_Buoys(x="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
 ```
 
-## Dawn
+```{r}
+# warning: FALSE
+
+FtMcHenry <- FtMcHenry |> select(datetime, WTMP, ATMP, WDIR, WSPD, GST) |>
+   mutate(Site = "FtMcHenry")
+
+Data <- FtMcHenry
+
+Data$WTMP <- as.double(Data$WTMP)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data |> mutate(WTMPF = (WTMP * 9/5) + 32)
+
+Data$ATMP <- as.double(Data$ATMP)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data |> mutate(ATMPF = (ATMP * 9/5) + 32)
+
+Data$WSPD <- as.double(Data$WSPD)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data |> mutate(WSPDK = (WSPD * 1.943844),
+                        WSPDM = (WSPD * 2.23694))
+
+Data$GST <- as.double(Data$GST)
+Data <- na.omit(Data)
+rownames(Data) <- NULL
+Data <- Data |> mutate(GSTK = (GST * 1.943844),
+                        GSTM = (GST * 2.23694))
+
+xValue <- "datetime"
+yValue <- "WTMPF"
+myfactor <- "Site"
+
+WaterTemperature <- ggplot(Data, aes(x=.data[[xValue]], y = .data[[yValue]], color = .data[[myfactor]]))  +  geom_line(linewidth = 0.4) + labs(title = NULL, x = NULL, y = "Water Temperature (*F)") + theme_bw() + theme(legend.position = "right")
+```
 
 ```{r}
+url <- "https://forecast.weather.gov/MapClick.php?lat=39.2736&lon=-76.6264&unit=0&lg=english&FcstType=digital"
+HourlyWeatherForecast <- FortyEightHour(url)
+```
+
+```{r}
+MyData <- HourlyWeatherForecast
+MyData$Date <- gsub("/(0+)", "/", MyData$Date)
+MyData$Date <- paste(MyData$Date, year, sep="/")
+MyData$Date <- lubridate::mdy(MyData$Date)
+MyData$Hour <- paste0(MyData$Hour, ":00:00")
+MyData$Hour <- lubridate::hms(MyData$Hour)
+MyData$Hour[MyData$Hour == as.period(0)] <- hms("23:59:59")
+
+MyData <- MyData |> mutate(datetime = ymd(Date) + hms(Hour)) |> relocate(datetime, .before = Date)
+
+#colnames(MyData)
+
+MyData$Temperature <- as.numeric(MyData$Temperature)
+MyData$Dewpoint <- as.numeric(MyData$Dewpoint)
+#MyData$HeatIndex <- as.numeric(MyData$HeatIndex)
+MyData$SurfaceWind <- as.numeric(MyData$SurfaceWind)
+MyData$Gust <- as.numeric(MyData$Gust)
+MyData$SkyCover <- as.numeric(MyData$SkyCover)
+MyData$RelativeHumidity <- as.numeric(MyData$RelativeHumidity)
+MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
+```
+
+```{r}
+  PlotData <- MyData
+  
+  PredictedWindSpeed <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = SurfaceWindKnots, color = "Wind")) +
+  geom_point(aes(y = Gust, color="Gust"), size=2) +
+  labs(title = NULL, x = NULL, y = "Wind Speed (knots)") +
+  theme_bw() +
+  theme(legend.position = "right") +
+  geom_hline(yintercept = 10, linetype = "dashed", color = "red") + 
+  geom_hline(yintercept = 21, linetype = "dashed", color = "red") 
+```
+
+```{r}
+#| include: FALSE
+
+#WindSpeed
+PlotData <- Data |> filter(Site == "FtMcHenry")
+
+CurrentDate <- Sys.Date()
+
+PlotData <- PlotData |> filter(datetime >= (CurrentDate - 7) & datetime <= (CurrentDate + 1))
+
+WindSpeed <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = WSPDK, color="Wind"), linewidth=0.5) +
+  geom_point(aes(y = GSTK, color="Gust"), size=0.5) + 
+  labs(title = NULL, x = NULL, y = "Wind Speed (knots)") +
+  theme_bw() + theme(legend.position = "right")
+
+Windspeed <- WindSpeed + geom_hline(yintercept = 10, linetype = "dashed", color = "red") + geom_hline(yintercept = 21, linetype = "dashed", color = "red") 
+```
+
+```{r}
+# Rainfall
+url <- "https://forecast.weather.gov/data/obhistory/KDMH.html"
+
+TheInitialData <- RainfallHistorical(url=url)
+
+max_y <- max(TheInitialData$Precip1hr, na.rm = TRUE)
+
+TotalPrecipitation <- TheInitialData |> group_by(Date) |>
+  summarise(TotalPrecipitation = sum(Precip1hr, na.rm = TRUE))
+TotalRainfallPerDay <- TotalPrecipitation |>
+  mutate(datetime = as.POSIXct(Date) + hours(12))
+
+InitialPlot <- ggplot(TheInitialData, aes(x = datetime, y = Precip1hr)) +
+  geom_col(fill = "darkblue") +
+  theme_bw() +
+  theme(axis.title.x = element_blank()) +
+  labs(y = "Precipitation (in)")
+
+PreviousRainfall <- InitialPlot + geom_label(data = TotalRainfallPerDay, aes(x = datetime, y = max_y, label = round(TotalPrecipitation, 2)), fill = "white", color = "black", size = 3, label.padding = unit(0.3, "lines"))
+```
+
+```{r}
+# Tides
+url <- "https://marineweather.net/tide/fort-mchenry-marsh-patapsco-river-md-tides"
+
+PlotData <- Tides(url=url)
+
+current_time <- Sys.time()
+
+#PlotData <- PlotData |> arrange(datetime)
+
+TidalData <- ggplot(PlotData, aes(x = datetime, y = Feet)) +
+  geom_line() + geom_point() +
+  labs(x = "Date", y = "Feet") +
+  theme_bw() +
+  geom_vline(xintercept = current_time, linetype = "dashed", color = "red")
+
+TidalDistinct <- ggplot(PlotData, aes(x = datetime, y = Feet, color = Tide)) +
+  geom_line() +
+  labs(x = "Date", y = "Feet", color = "Tide") +
+  theme_bw() +
+  geom_vline(xintercept = current_time, linetype = "dashed", color = "red")
+```
+
+## First Column 
+
+### First Row {.tabset}
+
+#### Dawn
+```{r}
+#| warning: false
 plotly::ggplotly(DawnSunrise)
 ```
 
+#### Dusk
 
+```{r}
+#| warning: false
+plotly::ggplotly(DuskSunset)
+```
+
+#### Both
+```{r}
+#| warning: false
+plotly::ggplotly(AllSunrise)
+```
+
+### Second Row {.tabset}
+
+#### Air Temperature
+```{r}
+plotly::ggplotly(WaterTemperature)
+```
+
+#### Air Temperature Forecast
+```{r}
+plotly::ggplotly(WaterTemperature)
+```
+
+### Third Row {.tabset}
+
+#### Rainfall
+```{r}
+plotly::ggplotly(PreviousRainfall)
+```
+
+#### Rainfall Forecast
+```{r}
+plotly::ggplotly(PreviousRainfall)
+```
+
+#
+
+## Second Column 
+
+### First Row {.tabset}
+
+#### Tide
+```{r}
+plotly::ggplotly(TidalData)
+```
+
+#### Tide Forecast
+```{r}
+plotly::ggplotly(TidalData)
+```
+
+### Second Row {.tabset}
+
+#### Water Temperature
+```{r}
+plotly::ggplotly(WaterTemperature)
+```
+
+### Third Row {.tabset}
+
+#### Windspeed
+```{r}
+plotly::ggplotly(Windspeed)
+```
+
+#### Windspeed Forecast
+```{r}
+plotly::ggplotly(PredictedWindSpeed)
+```
