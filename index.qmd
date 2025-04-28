@@ -171,6 +171,17 @@ MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
 ```{r}
   PlotData <- MyData
   
+  PredictedAirTemperature <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = Temperature, color = "Temperature")) +
+  geom_point(aes(y = Temperature, color="Temperature"), size=2) +
+  labs(title = NULL, x = NULL, y = "Air Temperature (F)") +
+  theme_bw() +
+  theme(legend.position = "right")
+```
+
+```{r}
+  PlotData <- MyData
+  
   PredictedWindSpeed <- ggplot(PlotData, aes(x = datetime)) +
   geom_line(aes(y = SurfaceWindKnots, color = "Wind")) +
   geom_point(aes(y = Gust, color="Gust"), size=2) +
@@ -190,6 +201,12 @@ PlotData <- Data |> filter(Site == "FtMcHenry")
 CurrentDate <- Sys.Date()
 
 PlotData <- PlotData |> filter(datetime >= (CurrentDate - 7) & datetime <= (CurrentDate + 1))
+
+AtmosphericTemperature <- ggplot(PlotData, aes(x = datetime)) +
+  geom_line(aes(y = ATMPF, color="ATMPF"), linewidth=0.5) +
+  geom_point(aes(y = ATMPF, color="ATMPF"), size=0.5) + 
+  labs(title = NULL, x = NULL, y = "Atmospheric Temperature (*F)") +
+  theme_bw() + theme(legend.position = "right")
 
 WindSpeed <- ggplot(PlotData, aes(x = datetime)) +
   geom_line(aes(y = WSPDK, color="Wind"), linewidth=0.5) +
@@ -272,12 +289,12 @@ plotly::ggplotly(AllSunrise)
 
 #### Air Temperature
 ```{r}
-plotly::ggplotly(WaterTemperature)
+plotly::ggplotly(AtmosphericTemperature)
 ```
 
 #### Air Temperature Forecast
 ```{r}
-plotly::ggplotly(WaterTemperature)
+plotly::ggplotly(PredictedAirTemperature)
 ```
 
 ### Third Row {.tabset}
