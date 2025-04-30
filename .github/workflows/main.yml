@@ -27,6 +27,7 @@ jobs:
             any::rvest
             any::scales
             any::hms
+            any::plotly
       
       - name: Install Streptoprocne
         env:
