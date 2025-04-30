@@ -16,11 +16,13 @@ jobs:
             any::dplyr
             any::ggplot2
             any::lubridate
-            any::pak
+            any::remotes
       
       - name: Install Streptoprocne
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          Rscript -e "pak::pkg_install('DavidRach/Streptoprocne')"      
+          Rscript -e "remotes::install_github('DavidRach/Streptoprocne')"      
       
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
