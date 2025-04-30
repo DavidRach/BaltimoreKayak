@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 jobs:
   import-data:
@@ -15,8 +15,8 @@ jobs:
           packages: |
             any::dplyr
             any::ggplot2
-            any:: lubridate
-            any:: remotes
+            any::lubridate
+            any::remotes
       
       - name: Install Streptoprocne
         run: |
