@@ -26,6 +26,7 @@ jobs:
             any::rmarkdown
             any::rvest
             any::scales
+            any::hms
       
       - name: Install Streptoprocne
         env:
