@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 jobs:
   import-data:
@@ -19,6 +19,7 @@ jobs:
             any::remotes
             any::knitr
             any::rmarkdown
+            any::rvest
       
       - name: Install Streptoprocne
         env:
