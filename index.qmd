@@ -10,6 +10,9 @@ project:
 ---
 
 ```{r}
+#| echo: false
+#| warning: false
+
 library(Streptoprocne)
 library(dplyr)
 library(lubridate)
@@ -17,6 +20,10 @@ library(ggplot2)
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
 url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=0&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
 SunriseTable <- Streptoprocne::SunriseSunset(x=url)
 
@@ -25,6 +32,10 @@ TwilightTable <- CivilTwilight(x=url)
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
 year <- as.integer(format(Sys.Date(), "%Y"))
 
 TheData <- left_join(SunriseTable, TwilightTable, by=c("Month", "Day"))
@@ -68,8 +79,8 @@ sunset_label <- paste("Sunset:", format(Today$Sunset[1], "%H:%M"))
 ```
 
 ```{r}
-#| include: FALSE
-#| warning: FALSE
+#| echo: false
+#| warning: false
 
 plot <- ggplot(DST_Data, aes(x = Date)) +
   geom_line(aes(y = Sunrise, color = "Sunrise")) +
@@ -99,12 +110,17 @@ DuskSunset <- ggplot(PlotData, aes(x = Date)) +
 
 
 ```{r}
+#| echo: false
+#| warning: false
+
 url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
 FtMcHenry <- NOAA_Buoys(x="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
 ```
 
 ```{r}
-# warning: FALSE
+#| echo: false
+#| warning: false
+
 
 FtMcHenry <- FtMcHenry |> select(datetime, WTMP, ATMP, WDIR, WSPD, GST) |>
    mutate(Site = "FtMcHenry")
@@ -141,11 +157,19 @@ WaterTemperature <- ggplot(Data, aes(x=.data[[xValue]], y = .data[[yValue]], col
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
 url <- "https://forecast.weather.gov/MapClick.php?lat=39.2736&lon=-76.6264&unit=0&lg=english&FcstType=digital"
 HourlyWeatherForecast <- FortyEightHour(url)
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
 MyData <- HourlyWeatherForecast
 MyData$Date <- gsub("/(0+)", "/", MyData$Date)
 MyData$Date <- paste(MyData$Date, year, sep="/")
@@ -169,6 +193,10 @@ MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
   PlotData <- MyData
   
   PredictedAirTemperature <- ggplot(PlotData, aes(x = datetime)) +
@@ -210,6 +238,10 @@ MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
   PlotData <- MyData
   
   PredictedWindSpeed <- ggplot(PlotData, aes(x = datetime)) +
@@ -223,7 +255,8 @@ MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
 ```
 
 ```{r}
-#| include: FALSE
+#| echo: false
+#| warning: false
 
 #WindSpeed
 PlotData <- Data |> filter(Site == "FtMcHenry")
@@ -248,6 +281,10 @@ Windspeed <- WindSpeed + geom_hline(yintercept = 10, linetype = "dashed", color 
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
 # Rainfall
 url <- "https://forecast.weather.gov/data/obhistory/KDMH.html"
 
@@ -270,6 +307,10 @@ PreviousRainfall <- InitialPlot + geom_label(data = TotalRainfallPerDay, aes(x =
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
 PlotData <- TheInitialData
 
 PlotData$RelativeHumidity <- gsub("%", "", fixed=TRUE, PlotData$RelativeHumidity)
@@ -296,6 +337,10 @@ Barometer <- ggplot(PlotData, aes(x = datetime)) +
 ```
 
 ```{r}
+#| echo: false
+#| warning: false
+
+
 # Tides
 url <- "https://marineweather.net/tide/fort-mchenry-marsh-patapsco-river-md-tides"
 
