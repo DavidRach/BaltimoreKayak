@@ -23,17 +23,16 @@ jobs:
           Rscript -e "remotes::install_github('DavidRach/Streptoprocne')"      
       
       - name: Set up Quarto
-        uses: quarto-dev/quarto-actions@v2
-        with:
-          subcommand: setup
+        uses: quarto-dev/quarto-actions/setup@v2
 
       - name: Check out repository
         uses: actions/checkout@v3
 
       - name: Render Quarto
-        uses: quarto-dev/quarto-actions@v2
+        uses: quarto-dev/quarto-actions/render@v2
         with:
-          subcommand: render
+          to: html
+          path: source-folder
 
       - name: Commit results
         run: |
