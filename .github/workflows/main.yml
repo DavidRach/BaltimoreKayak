@@ -17,6 +17,8 @@ jobs:
             any::ggplot2
             any::lubridate
             any::remotes
+            any::knitr
+            any::rmarkdown
       
       - name: Install Streptoprocne
         env:
