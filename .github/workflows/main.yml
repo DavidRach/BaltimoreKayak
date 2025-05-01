@@ -14,27 +14,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev
           
-      - name: Install packages
-        uses: r-lib/actions/setup-r-dependencies@v2
+      - name: Install packages via renv
+        uses: r-lib/actions/setup-renv@v2
         with:
-          packages: |
-            any::dplyr
-            any::ggplot2
-            any::lubridate
-            any::remotes
-            any::knitr
-            any::rmarkdown
-            any::rvest
-            any::scales
-            any::hms
-            any::plotly
-      
-      - name: Install Streptoprocne
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          Rscript -e "remotes::install_github('DavidRach/Streptoprocne')"      
-      
+          cache-version: 1
+    
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
