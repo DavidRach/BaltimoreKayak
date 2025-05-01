@@ -13,6 +13,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Check out repository
+        uses: actions/checkout@v3
           
       - name: Install packages via renv
         uses: r-lib/actions/setup-renv@v2
@@ -23,9 +26,6 @@ jobs:
         uses: quarto-dev/quarto-actions/setup@v2
         with:
           tinytex: true
-
-      - name: Check out repository
-        uses: actions/checkout@v3
 
       - name: Render Quarto
         uses: quarto-dev/quarto-actions/render@v2
