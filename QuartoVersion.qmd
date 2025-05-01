@@ -8,3 +8,8 @@ engine: knitr
 quarto check
 ```
 
+```{r}
+sessionInfo()
+```
+
+
