@@ -37,6 +37,8 @@ jobs:
       
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          tinytex: true
 
       - name: Check out repository
         uses: actions/checkout@v3
