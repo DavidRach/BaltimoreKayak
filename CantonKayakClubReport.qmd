@@ -490,8 +490,8 @@ TableProcessing <- function(x){
  TheFirstCol <- data.frame(TheFirstCol)
  TheFirstCol <- TheFirstCol %>% pull(.)
  TheStrings <- c("(%)", "(°F)", "(EDT)", "(mph)")
- TheFirstCol <- Luciernaga::NameCleanUp(TheFirstCol, TheStrings)
- TheFirstCol <- Luciernaga::NameCleanUp(TheFirstCol, " ")
+ TheFirstCol <- NameCleanUp(TheFirstCol, TheStrings)
+ TheFirstCol <- NameCleanUp(TheFirstCol, " ")
  TheFirstCol <- data.frame(TheFirstCol)
  
  TheFirstSet <- TableX[,StartIndex:(SecondIndex - 1)]
