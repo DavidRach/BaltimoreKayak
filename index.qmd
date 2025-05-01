@@ -161,7 +161,6 @@ WaterTemperature <- ggplot(Data, aes(x=.data[[xValue]], y = .data[[yValue]], col
 #| echo: false
 #| warning: false
 
-
 url <- "https://forecast.weather.gov/MapClick.php?lat=39.2736&lon=-76.6264&unit=0&lg=english&FcstType=digital"
 HourlyWeatherForecast <- FortyEightHour(url)
 ```
@@ -177,9 +176,9 @@ MyData$Date <- paste(MyData$Date, year, sep="/")
 MyData$Date <- lubridate::mdy(MyData$Date)
 MyData$Hour <- paste0(MyData$Hour, ":00:00")
 MyData$Hour <- lubridate::hms(MyData$Hour)
-MyData$Hour[MyData$Hour == as.period(0)] <- hms("23:59:59")
+MyData$Hour[MyData$Hour == as.period(0)] <- lubridate::hms("23:59:59")
 
-MyData <- MyData |> mutate(datetime = ymd(Date) + hms(Hour)) |> relocate(datetime, .before = Date)
+MyData <- MyData |> mutate(datetime = ymd(Date) + lubridate::hms(Hour)) |> relocate(datetime, .before = Date)
 
 #colnames(MyData)
 
