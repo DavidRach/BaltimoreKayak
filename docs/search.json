@@ -1,0 +1,23 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "",
+    "section": "",
+    "text": "plotly::ggplotly(DawnSunrise)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(DuskSunset)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(AllSunrise)\n\n\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(AtmosphericTemperature)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PredictedAirTemperature)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(Dewpoint)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PredictedDewpoint)\n\n\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PreviousRainfall)\n\nWarning in geom2trace.default(dots[[1L]][[1L]], dots[[2L]][[1L]], dots[[3L]][[1L]]): geom_GeomLabel() has yet to be implemented in plotly.\n  If you'd like to see this geom implemented,\n  Please open an issue with your example code at\n  https://github.com/ropensci/plotly/issues\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PreviousRainfall)\n\nWarning in geom2trace.default(dots[[1L]][[1L]], dots[[2L]][[1L]], dots[[3L]][[1L]]): geom_GeomLabel() has yet to be implemented in plotly.\n  If you'd like to see this geom implemented,\n  Please open an issue with your example code at\n  https://github.com/ropensci/plotly/issues\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PredictedPrecipitationPotential)"
+  },
+  {
+    "objectID": "index.html#first-column",
+    "href": "index.html#first-column",
+    "title": "",
+    "section": "",
+    "text": "plotly::ggplotly(DawnSunrise)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(DuskSunset)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(AllSunrise)\n\n\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(AtmosphericTemperature)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PredictedAirTemperature)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(Dewpoint)\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PredictedDewpoint)\n\n\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PreviousRainfall)\n\nWarning in geom2trace.default(dots[[1L]][[1L]], dots[[2L]][[1L]], dots[[3L]][[1L]]): geom_GeomLabel() has yet to be implemented in plotly.\n  If you'd like to see this geom implemented,\n  Please open an issue with your example code at\n  https://github.com/ropensci/plotly/issues\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PreviousRainfall)\n\nWarning in geom2trace.default(dots[[1L]][[1L]], dots[[2L]][[1L]], dots[[3L]][[1L]]): geom_GeomLabel() has yet to be implemented in plotly.\n  If you'd like to see this geom implemented,\n  Please open an issue with your example code at\n  https://github.com/ropensci/plotly/issues\n\n\n\n\n\n\n\n\n\n\nplotly::ggplotly(PredictedPrecipitationPotential)"
+  },
+  {
+    "objectID": "index.html#second-column",
+    "href": "index.html#second-column",
+    "title": "",
+    "section": "Second Column",
+    "text": "Second Column\n\nFirst Row\n\nTide\n\nplotly::ggplotly(TidalData)\n\n\n\n\n\n\n\nTide Forecast\n\nplotly::ggplotly(TidalData)\n\n\n\n\n\n\n\n\nSecond Row\n\nWater Temperature\n\nplotly::ggplotly(WaterTemperature)\n\n\n\n\n\n\n\nRelative Humidity\n\nplotly::ggplotly(RelativeHumidity)\n\n\n\n\n\n\n\nRelative Humidity Forecast\n\nplotly::ggplotly(PredictedRelativeHumidity)\n\n\n\n\n\n\n\nSkyCover Forecast\n\nplotly::ggplotly(PredictedSkyCover)\n\n\n\n\n\n\n\n\nThird Row\n\nWindspeed\n\nplotly::ggplotly(Windspeed)\n\n\n\n\n\n\n\nWindspeed Forecast\n\nplotly::ggplotly(PredictedWindSpeed)\n\n\n\n\n\n\n\nBarometer\n\nplotly::ggplotly(Barometer)"
+  }
+]
