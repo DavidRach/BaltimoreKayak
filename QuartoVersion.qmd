@@ -1,0 +1,10 @@
+---
+title: "What version Quarto in GitHub actions?"
+format: html
+engine: knitr
+---
+
+```{bash}
+quarto check
+```
+
