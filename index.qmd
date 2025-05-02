@@ -479,10 +479,3 @@ plotly::ggplotly(PredictedWindSpeed)
 ```{r}
 plotly::ggplotly(Barometer)
 ```
-
-
-#### Data
-```{r}
-Data <- sessionInfo()
-print(Data)
-```

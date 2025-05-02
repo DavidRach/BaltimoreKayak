@@ -22,7 +22,7 @@ website:
     - text: "Assorted Locations"
       menu:
       - text: "Baltimore"
-        href: QuartoVersion.qmd
+        href: index.qmd
     right:
     - icon: github
       href: https://github.com/DavidRach/BaltimoreKayak
