@@ -1,7 +1,8 @@
 project:
   type: website
   render:
-  - "*.qmd"
+  - "Processing.qmd"
+  - "index.qmd"
   - "!CantonKayakClubReport.qmd"
   output-dir: docs/
 website:

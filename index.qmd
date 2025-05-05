@@ -23,30 +23,15 @@ library(hms) #Bug
 ```{r}
 #| echo: false
 #| warning: false
+Data <- read.csv("data/TwilightSunrise.csv", check.names=FALSE)
 
-
-url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=0&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
-SunriseTable <- Streptoprocne::SunriseSunset(x=url)
-
-url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2024&task=2&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
-TwilightTable <- CivilTwilight(x=url)
-```
-
-```{r}
-#| echo: false
-#| warning: false
-
+Data$Date <- lubridate::ymd(Data$Date)
+Data$Sunrise <- lubridate::hms(Data$Sunrise)
+Data$Sunset <- lubridate::hms(Data$Sunset)
+Data$Dawn <- lubridate::hms(Data$Dawn)
+Data$Dusk <- lubridate::hms(Data$Dusk)
 
 year <- as.integer(format(Sys.Date(), "%Y"))
-
-TheData <- left_join(SunriseTable, TwilightTable, by=c("Month", "Day"))
-
-TheData$Date <- lubridate::make_date(year = year,
- month = match(TheData$Month, month.name), day = as.integer(TheData$Day))
-
-Data <- TheData |> arrange(Date)|> relocate(Date, .before = Sunrise) |>
-   select(-Month, -Day)
-
 tz <- "America/New_York"
 dates <- seq(as.POSIXct(paste0(year, "-01-01"), tz = tz),
   as.POSIXct(paste0(year, "-12-31"), tz = tz),by = "day")
@@ -109,24 +94,13 @@ DuskSunset <- ggplot(PlotData, aes(x = Date)) +
   scale_y_time(labels = scales::time_format("%H:%M"))
 ```
 
-
 ```{r}
 #| echo: false
 #| warning: false
 
-url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
-FtMcHenry <- NOAA_Buoys(x="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
-```
-
-```{r}
-#| echo: false
-#| warning: false
-
-
-FtMcHenry <- FtMcHenry |> select(datetime, WTMP, ATMP, WDIR, WSPD, GST) |>
-   mutate(Site = "FtMcHenry")
-
-Data <- FtMcHenry
+Data <- read.csv("data/FtMcHenry.csv", check.names=FALSE)
+Data$datetime <- parse_date_time(Data$datetime, orders = c("Ymd HMS", "Ymd HM", "Ymd"), truncated = 3)
+Data <- Data |> filter(datetime >= (Sys.time() - days(7)))
 
 Data$WTMP <- as.double(Data$WTMP)
 Data <- na.omit(Data)
@@ -169,7 +143,6 @@ HourlyWeatherForecast <- FortyEightHour(url)
 #| echo: false
 #| warning: false
 
-
 MyData <- HourlyWeatherForecast
 MyData$Date <- gsub("/(0+)", "/", MyData$Date)
 MyData$Date <- paste(MyData$Date, year, sep="/")
@@ -195,7 +168,6 @@ MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
 ```{r}
 #| echo: false
 #| warning: false
-
 
   PlotData <- MyData
   
@@ -240,8 +212,6 @@ MyData <- MyData %>% mutate(SurfaceWindKnots = SurfaceWind * 0.868976)
 ```{r}
 #| echo: false
 #| warning: false
-
-
   PlotData <- MyData
   
   PredictedWindSpeed <- ggplot(PlotData, aes(x = datetime)) +
@@ -284,11 +254,12 @@ Windspeed <- WindSpeed + geom_hline(yintercept = 10, linetype = "dashed", color 
 #| echo: false
 #| warning: false
 
-
 # Rainfall
-url <- "https://forecast.weather.gov/data/obhistory/KDMH.html"
 
-TheInitialData <- RainfallHistorical(url=url)
+TheInitialData <- read.csv("data/HistoricalData.csv", check.names=FALSE)
+TheInitialData$datetime <- lubridate::ymd_hms(TheInitialData$datetime)
+TheInitialData$Date <- lubridate::ymd(TheInitialData$Date)
+TheInitialData <- TheInitialData |> filter(datetime >= (Sys.time() - days(7)))
 
 max_y <- max(TheInitialData$Precip1hr, na.rm = TRUE)
 

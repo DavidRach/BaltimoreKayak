@@ -1,0 +1,60 @@
+---
+title: "Data Processing"
+format: html
+---
+
+```{r}
+library(Streptoprocne)
+library(dplyr)
+```
+
+```{r}
+#| eval: FALSE
+url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2025&task=0&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
+SunriseTable <- Streptoprocne::SunriseSunset(x=url)
+
+url <- "https://aa.usno.navy.mil/calculated/rstt/year?ID=AA&year=2025&task=2&lat=39.2805&lon=-76.5940&label=Baltimore%2C+MD&tz=5.00&tz_sign=-1&submit=Get+Data"
+TwilightTable <- CivilTwilight(x=url)
+
+year <- as.integer(format(Sys.Date(), "%Y"))
+
+TheData <- left_join(SunriseTable, TwilightTable, by=c("Month", "Day"))
+
+TheData$Date <- lubridate::make_date(year = year,
+ month = match(TheData$Month, month.name), day = as.integer(TheData$Day))
+
+Data <- TheData |> arrange(Date)|> relocate(Date, .before = Sunrise) |>
+   select(-Month, -Day)
+
+write.csv(Data, "data/TwilightSunrise.csv", row.names=FALSE)
+```
+
+```{r}
+url <- "https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt"
+FtMcHenry <- NOAA_Buoys(x="https://www.ndbc.noaa.gov/data/realtime2/BLTM2.txt")
+FtMcHenry <- FtMcHenry |> select(datetime, WTMP, ATMP, WDIR, WSPD, GST) |>
+   mutate(Site = "FtMcHenry")
+
+Data <- read.csv("data/FtMcHenry.csv", check.names=FALSE)
+Data$datetime <- lubridate::parse_date_time(Data$datetime, orders = c("Ymd HMS", "Ymd HM", "Ymd"), truncated = 3)
+# write.csv(Data, "data/FtMcHenry.csv", row.names=FALSE)
+
+New <- setdiff(FtMcHenry, Data)
+Updated <- bind_rows(New, Data) |> arrange(desc(datetime))
+write.csv(Updated, "data/FtMcHenry.csv", row.names=FALSE)
+```
+
+```{r}
+url <- "https://forecast.weather.gov/data/obhistory/KDMH.html"
+TheInitialData <- RainfallHistorical(url=url)
+#write.csv(TheInitialData, "data/HistoricalData.csv", row.names=FALSE)
+
+Data <- read.csv("data/HistoricalData.csv", check.names=FALSE)
+Data$datetime <- lubridate::ymd_hms(Data$datetime)
+Data$Date <- lubridate::ymd(Data$Date)
+
+New <- setdiff(TheInitialData, Data)
+Updated <- bind_rows(New, Data) |> arrange(desc(datetime))
+write.csv(Updated, "data/HistoricalData.csv", row.names=FALSE)
+```
+
