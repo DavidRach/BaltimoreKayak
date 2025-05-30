@@ -1,4 +1,8 @@
 "datetime","Date","Time","WindMPH","VisMi","Weather","SkyCond","AirTempF","Dwpt","Min6hr","Max6hr","RelativeHumidity","WindChillF","HeatIndexF","AltimeterIn","SeaLevelmb","Precip1hr","Precip3hr","Precip6hr"
+2025-05-30 11:53:00,2025-05-30,"11:53","Calm",0,"NULL","NULL",81,64,NA,NA,"57%",NA,83,29.72,1006.4,0,NA,NA
+2025-05-30 10:53:00,2025-05-30,"10:53","Calm",0,"NULL","NULL",80.1,62.1,NA,NA,"54%",NA,81,29.76,1007.7,0,NA,NA
+2025-05-30 09:53:00,2025-05-30,"09:53","Calm",0,"NULL","NULL",77,62.1,NA,NA,"60%",NA,79,29.79,1008.8,0,NA,NA
+2025-05-30 08:53:00,2025-05-30,"08:53","Calm",0,"NULL","NULL",73,63,NA,NA,"71%",NA,NA,29.79,1008.7,0,NA,NA
 2025-05-30 07:53:00,2025-05-30,"07:53","Calm",0,"NULL","NULL",70,63,70,68,"79%",NA,NA,29.78,1008.6,0,NA,NA
 2025-05-30 06:53:00,2025-05-30,"06:53","Calm",0,"NULL","NULL",68,64,NA,NA,"87%",NA,NA,29.79,1008.6,0,NA,NA
 2025-05-30 05:53:00,2025-05-30,"05:53","Calm",0,"NULL","NULL",68,63,NA,NA,"84%",NA,NA,29.8,1009.1,0,NA,NA
