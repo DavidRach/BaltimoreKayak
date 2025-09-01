@@ -249,21 +249,18 @@ Attaching package: 'dplyr'</code></pre>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>url <span class="ot">&lt;-</span> <span class="st">"https://forecast.weather.gov/data/obhistory/KDMH.html"</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>TheInitialData <span class="ot">&lt;-</span> <span class="fu">RainfallHistorical</span>(<span class="at">url=</span>url)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: 20 failed to parse.</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
 <pre><code>Warning in max(TheInitialData$Precip1hr, na.rm = TRUE): no non-missing
 arguments to max; returning -Inf</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">#write.csv(TheInitialData, "data/HistoricalData.csv", row.names=FALSE)</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>Data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/HistoricalData.csv"</span>, <span class="at">check.names=</span><span class="cn">FALSE</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>Data<span class="sc">$</span>datetime <span class="ot">&lt;-</span> lubridate<span class="sc">::</span><span class="fu">ymd_hms</span>(Data<span class="sc">$</span>datetime)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>Data<span class="sc">$</span>Date <span class="ot">&lt;-</span> lubridate<span class="sc">::</span><span class="fu">ymd</span>(Data<span class="sc">$</span>Date)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>New <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(TheInitialData, Data)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>Updated <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(New, Data) <span class="sc">|&gt;</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(datetime))</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(Updated, <span class="st">"data/HistoricalData.csv"</span>, <span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#write.csv(TheInitialData, "data/HistoricalData.csv", row.names=FALSE)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>Data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/HistoricalData.csv"</span>, <span class="at">check.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>Data<span class="sc">$</span>datetime <span class="ot">&lt;-</span> lubridate<span class="sc">::</span><span class="fu">ymd_hms</span>(Data<span class="sc">$</span>datetime)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>Data<span class="sc">$</span>Date <span class="ot">&lt;-</span> lubridate<span class="sc">::</span><span class="fu">ymd</span>(Data<span class="sc">$</span>Date)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>New <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(TheInitialData, Data)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>Updated <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(New, Data) <span class="sc">|&gt;</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(datetime))</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(Updated, <span class="st">"data/HistoricalData.csv"</span>, <span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 
 
