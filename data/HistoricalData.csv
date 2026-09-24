@@ -1,4 +1,8 @@
 "datetime","Date","Time","WindMPH","VisMi","Weather","SkyCond","AirTempF","Dwpt","Min6hr","Max6hr","RelativeHumidity","WindChillF","HeatIndexF","AltimeterIn","SeaLevelmb","Precip1hr","Precip3hr","Precip6hr"
+2026-09-24 11:53:00,2026-09-24,"11:53","Calm",0,"NULL","NULL",64,48,NA,NA,"56%",NA,NA,30.39,1029.1,0,NA,NA
+2026-09-24 10:53:00,2026-09-24,"10:53","Calm",0,"NULL","NULL",62.1,48,NA,NA,"60%",NA,NA,30.41,1029.6,0,NA,NA
+2026-09-24 09:53:00,2026-09-24,"09:53","Calm",0,"NULL","NULL",59,46.9,NA,NA,"64%",NA,NA,30.41,1029.9,0,NA,NA
+2026-09-24 08:53:00,2026-09-24,"08:53","Calm",0,"NULL","NULL",55,46,NA,NA,"72%",NA,NA,30.4,1029.3,0,NA,NA
 2026-09-24 06:53:00,2026-09-24,"06:53","Calm",0,"NULL","NULL",53.1,44.1,NA,NA,"72%",NA,NA,30.36,1028.1,0,NA,NA
 2026-09-24 05:53:00,2026-09-24,"05:53","Calm",0,"NULL","NULL",54,44.1,NA,NA,"69%",NA,NA,30.36,1028,0,NA,NA
 2026-09-24 04:53:00,2026-09-24,"04:53","Calm",0,"NULL","NULL",55,44.1,NA,NA,"67%",NA,NA,30.36,1028,0,NA,NA
